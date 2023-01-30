@@ -3,51 +3,56 @@ package org.example.MongoDB;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
 import org.bson.Document;
+import org.example.Colores;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Ejercicio3 {
+
+    private static MongoCollection<Document> col;
+
     public static void main(String[] args) {
         MongoClient client = MongoClients.create("mongodb+srv://pnav:17072003@cluster0.8awmtte.mongodb.net/?retryWrites=true&w=majority");
         MongoDatabase db = client.getDatabase("BDPeliculas");
-        MongoCollection<Document> col = db.getCollection("peliculas");
+        col = db.getCollection("peliculas");
 
-        ejercicioUno(col);
+        ejercicioUno();
 
-        ejercicioDos(col);
+        ejercicioDos();
 
-        ejercicioTres(col);
+        ejercicioTres();
 
-        ejercicioCuatro(col);
+        ejercicioCuatro();
 
-        ejercicioCinco(col);
+        ejercicioCinco();
 
-        ejercicioSeis(col);
+        ejercicioSeis();
 
-        ejercicioSiete(col);
+        ejercicioSiete();
 
-        ejercicioOcho(col);
+        ejercicioOcho();
     }
 
-    private static void imprimirTitulo(String titulo){
+    private static void imprimirTitulo(String titulo) {
+        imprimirSeparador(titulo);
+        Colores.imprimirAzul(titulo);
+        imprimirSeparador(titulo);
+    }
+
+    private static void imprimirSeparador(String titulo) {
         for (int i = 0; i < titulo.length(); i++) {
-            System.out.print("-");
-        }
-        System.out.println();
-        System.out.println(titulo);
-        for (int i = 0; i < titulo.length(); i++) {
-            System.out.print("-");
+            System.out.print(Colores.ANSI_CYAN + "-" + Colores.ANSI_RESET);
         }
         System.out.println();
     }
 
-    public static void ejercicioUno(MongoCollection<Document> col){
+    public static void ejercicioUno() {
         imprimirTitulo("Ejercicio uno");
 
         BasicDBObject consulta = new BasicDBObject();
 
-        consulta.put("storyline", new BasicDBObject("$regex","crime").append("$options","i"));
+        consulta.put("storyline", new BasicDBObject("$regex", "crime").append("$options", "i"));
 
         FindIterable<Document> resultDocument = col.find(consulta);
 
@@ -60,7 +65,7 @@ public class Ejercicio3 {
         cursor.close();
     }
 
-    public static void ejercicioDos(MongoCollection<Document> col){
+    public static void ejercicioDos() {
         imprimirTitulo("Ejercicio dos");
 
         BasicDBObject consulta = new BasicDBObject();
@@ -74,18 +79,134 @@ public class Ejercicio3 {
             Document documento = cursor.next();
             Document actores = (Document) documento.get("actors");
             System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres",String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
+//            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres", String.class));
         }
         cursor.close();
     }
 
-    public static void ejercicioTres(MongoCollection<Document> col){
+    public static void ejercicioTres() {
         imprimirTitulo("Ejercicio tres");
 
         BasicDBObject consulta = new BasicDBObject();
 
         List<BasicDBObject> dbObjects = new ArrayList<>();
-        dbObjects.add(new BasicDBObject("genres","Drama"));
-        dbObjects.add(new BasicDBObject("$in",new BasicDBObject("actors.starring","Brad Pitt")));
+        dbObjects.add(new BasicDBObject("genres", "Drama"));
+        dbObjects.add(new BasicDBObject("actors.starring", "Brad Pitt"));
+
+        consulta.put("$and", dbObjects);
+
+        FindIterable<Document> resultDocument = col.find(consulta);
+
+        MongoCursor<Document> cursor = resultDocument.cursor();
+        while (cursor.hasNext()) {
+            Document documento = cursor.next();
+            Document actores = (Document) documento.get("actors");
+            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres", String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
+        }
+        cursor.close();
+    }
+
+    public static void ejercicioCuatro() {
+        imprimirTitulo("Ejercicio cuatro");
+
+        BasicDBObject consulta = new BasicDBObject();
+
+        List<BasicDBObject> dbObjects = new ArrayList<>();
+        dbObjects.add(new BasicDBObject("actors.starring", "Morgan Freeman"));
+        dbObjects.add(new BasicDBObject("actors.cast", "Morgan Freeman"));
+
+        consulta.put("$or", dbObjects);
+
+        FindIterable<Document> resultDocument = col.find(consulta);
+
+        MongoCursor<Document> cursor = resultDocument.cursor();
+        while (cursor.hasNext()) {
+            Document documento = cursor.next();
+            Document actores = (Document) documento.get("actors");
+            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres", String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class) + "\tDe reparto --> " + actores.getList("cast",String.class));
+        }
+        cursor.close();
+    }
+
+    public static void ejercicioCinco() {
+        imprimirTitulo("Ejercicio cinco");
+
+        BasicDBObject consulta = new BasicDBObject();
+
+        List<BasicDBObject> dbObjects = new ArrayList<>();
+        dbObjects.add(new BasicDBObject("actors.starring", "Charles Chaplin"));
+
+        List<String> actoresLista = new ArrayList<>();
+        actoresLista.add("Paulette Goddard");
+        actoresLista.add("Florence Lee");
+        dbObjects.add(new BasicDBObject("actors.cast", new BasicDBObject("$all", actoresLista)));
+
+        consulta.put("$and", dbObjects);
+
+        FindIterable<Document> resultDocument = col.find(consulta);
+
+        MongoCursor<Document> cursor = resultDocument.cursor();
+        while (cursor.hasNext()) {
+            Document documento = cursor.next();
+            Document actores = (Document) documento.get("actors");
+            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres", String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
+        }
+        cursor.close();
+    }
+
+    public static void ejercicioSeis() {
+        imprimirTitulo("Ejercicio seis");
+
+        BasicDBObject consulta = new BasicDBObject();
+
+
+        consulta.put("actors.starring",new BasicDBObject("$size",3));
+
+        FindIterable<Document> resultDocument = col.find(consulta);
+
+        MongoCursor<Document> cursor = resultDocument.cursor();
+        while (cursor.hasNext()) {
+            Document documento = cursor.next();
+            Document actores = (Document) documento.get("actors");
+            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres", String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
+        }
+        cursor.close();
+    }
+
+    public static void ejercicioSiete() {
+        imprimirTitulo("Ejercicio siete");
+
+        BasicDBObject consulta = new BasicDBObject();
+
+
+        consulta.put("year",new BasicDBObject("$gt","2010"));
+
+        FindIterable<Document> resultDocument = col.find(consulta);
+
+        MongoCursor<Document> cursor = resultDocument.cursor();
+        while (cursor.hasNext()) {
+            Document documento = cursor.next();
+            Document actores = (Document) documento.get("actors");
+            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres", String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
+        }
+        cursor.close();
+    }
+
+    public static void ejercicioOcho() {
+        imprimirTitulo("Ejercicio ocho (Películas que tengan solo un protagonista, que sea Christian Bale o Charles Chaplin y producidas antes del 2005 o en el 2005");
+
+        BasicDBObject consulta = new BasicDBObject();
+
+        List<BasicDBObject> dbObjects = new ArrayList<>();
+
+        dbObjects.add(new BasicDBObject("actors.starring",new BasicDBObject("$size",1)));
+
+        List<String> actoresLista = new ArrayList<>();
+        actoresLista.add("Christian Bale");
+        actoresLista.add("Charles Chaplin");
+
+        dbObjects.add(new BasicDBObject("actors.starring",new BasicDBObject("$in",actoresLista)));
+        dbObjects.add(new BasicDBObject("year",new BasicDBObject("$lte","2005")));
 
         consulta.put("$and",dbObjects);
 
@@ -95,111 +216,7 @@ public class Ejercicio3 {
         while (cursor.hasNext()) {
             Document documento = cursor.next();
             Document actores = (Document) documento.get("actors");
-            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres",String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
-        }
-        cursor.close();
-    }
-
-    public static void ejercicioCuatro(MongoCollection<Document> col){
-        imprimirTitulo("Ejercicio cuatro");
-
-        BasicDBObject consulta = new BasicDBObject();
-
-        List<BasicDBObject> dbObjects = new ArrayList<>();
-        dbObjects.add(new BasicDBObject("$in",new BasicDBObject("actors.starring","Morgan Freeman")));
-        dbObjects.add(new BasicDBObject("$in",new BasicDBObject("actors.cast","Morgan Freeman")));
-
-        consulta.put("$or",dbObjects);
-
-        FindIterable<Document> resultDocument = col.find(consulta);
-
-        MongoCursor<Document> cursor = resultDocument.cursor();
-        while (cursor.hasNext()) {
-            Document documento = cursor.next();
-            Document actores = (Document) documento.get("actors");
-            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres",String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
-        }
-        cursor.close();
-    }
-
-    public static void ejercicioCinco(MongoCollection<Document> col){
-        imprimirTitulo("Ejercicio cinco");
-
-        BasicDBObject consulta = new BasicDBObject();
-
-//        List<BasicDBObject> dbObjects = new ArrayList<>();
-        List<String> actoresLista = new ArrayList<>();
-        actoresLista.add("Paulette Goddard");
-        actoresLista.add("Florence Lee");
-//        dbObjects.add(new BasicDBObject("$all",new BasicDBObject("actors.cast",actoresLista)));
-
-//        consulta.put("$or",dbObjects);
-        consulta.put("$all",new BasicDBObject("actors.cast",actoresLista));
-
-        FindIterable<Document> resultDocument = col.find(consulta);
-
-        MongoCursor<Document> cursor = resultDocument.cursor();
-        while (cursor.hasNext()) {
-            Document documento = cursor.next();
-            Document actores = (Document) documento.get("actors");
-            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres",String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
-        }
-        cursor.close();
-    }
-
-    public static void ejercicioSeis(MongoCollection<Document> col){
-        imprimirTitulo("Ejercicio seis");
-
-        BasicDBObject consulta = new BasicDBObject();
-
-
-        consulta.put("size",3);
-
-        FindIterable<Document> resultDocument = col.find(consulta);
-
-        MongoCursor<Document> cursor = resultDocument.cursor();
-        while (cursor.hasNext()) {
-            Document documento = cursor.next();
-            Document actores = (Document) documento.get("actors");
-            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres",String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
-        }
-        cursor.close();
-    }
-
-    public static void ejercicioSiete(MongoCollection<Document> col){
-        imprimirTitulo("Ejercicio siete");
-
-        BasicDBObject consulta = new BasicDBObject();
-
-
-        consulta.put("year",2010);
-
-        FindIterable<Document> resultDocument = col.find(consulta);
-
-        MongoCursor<Document> cursor = resultDocument.cursor();
-        while (cursor.hasNext()) {
-            Document documento = cursor.next();
-            Document actores = (Document) documento.get("actors");
-            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres",String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
-        }
-        cursor.close();
-    }
-
-    public static void ejercicioOcho(MongoCollection<Document> col){
-        imprimirTitulo("Ejercicio ocho");
-
-        BasicDBObject consulta = new BasicDBObject();
-
-
-        consulta.put("year",2010);
-
-        FindIterable<Document> resultDocument = col.find(consulta);
-
-        MongoCursor<Document> cursor = resultDocument.cursor();
-        while (cursor.hasNext()) {
-            Document documento = cursor.next();
-            Document actores = (Document) documento.get("actors");
-            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres",String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
+            System.out.println(documento.get("title") + " " + documento.get("year") + "\tGéneros --> " + documento.getList("genres", String.class) + "\tProtagonistas --> " + actores.getList("starring", String.class));
         }
         cursor.close();
     }
